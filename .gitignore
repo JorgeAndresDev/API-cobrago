@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Railway
+.railway/
+
+# OS
+.DS_Store
+Thumbs.db

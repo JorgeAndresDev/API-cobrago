@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import engine, Base
 from app.models import * # Carga centralizada de todos los modelos
@@ -9,6 +10,15 @@ from app.routes import auth
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CobraGo API", version="1.0.0")
+
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # En producción, especificar los dominios permitidos
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def startup_db_check():

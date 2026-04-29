@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.usuario import Usuario
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.config import settings
 
-# Configuración — cambia SECRET_KEY en producción
-SECRET_KEY = "jorgeandresg1207"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30 # Token corto
-REFRESH_TOKEN_EXPIRE_DAYS = 7   # Refresh largo
+# Configuración
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 security = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
