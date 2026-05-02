@@ -6,9 +6,6 @@ from app.models import * # Carga centralizada de todos los modelos
 from app.routes import clientes, prestamo as prestamo_router, pagos
 from app.routes import auth
 
-# Crear tablas en la DB (en producción usar Alembic)
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="CobraGo API", version="1.0.0")
 
 # Configuración de CORS
@@ -22,6 +19,9 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_db_check():
+    # Crear tablas en la DB
+    Base.metadata.create_all(bind=engine)
+    
     # Auto-parche para asegurar columnas y tablas nuevas sin migraciones manuales
     with engine.connect() as conn:
         try:
