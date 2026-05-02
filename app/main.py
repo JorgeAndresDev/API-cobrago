@@ -19,41 +19,47 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_db_check():
-    # Crear tablas en la DB
-    Base.metadata.create_all(bind=engine)
-    
-    # Auto-parche para asegurar columnas y tablas nuevas sin migraciones manuales
-    with engine.connect() as conn:
-        try:
-            # 1. Tabla Clientes
-            conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS usuario_id INTEGER;"))
-            
-            # 2. Tabla Prestamos (Nuevas columnas y limpieza de antiguas)
-            conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto NUMERIC(12, 2);"))
-            conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS num_cuotas INTEGER;"))
-            conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';"))
-            
-            # 3. Tabla Cuotas
-            conn.execute(text("ALTER TABLE cuotas ADD COLUMN IF NOT EXISTS monto_esperado NUMERIC(12, 2);"))
-            
-            # 4. Tabla de Auditoría (HistoriaOperacion)
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS historial_operaciones (
-                    id SERIAL PRIMARY KEY,
-                    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
-                    accion VARCHAR NOT NULL,
-                    monto NUMERIC(12, 2),
-                    entidad_id INTEGER,
-                    detalles VARCHAR,
-                    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
-            
-            conn.commit()
-            print("INFO:     Database schema COMPATIBILITY SYNC completed.")
-        except Exception as e:
-            print(f"INFO:     Schema sync notice: {e}")
-            conn.rollback()
+    print("INFO:     Iniciando conexión a la base de datos...")
+    try:
+        # Crear tablas en la DB
+        Base.metadata.create_all(bind=engine)
+        print("INFO:     Conexión exitosa y tablas verificadas.")
+        
+        # Auto-parche para asegurar columnas y tablas nuevas sin migraciones manuales
+        with engine.connect() as conn:
+            try:
+                # 1. Tabla Clientes
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS usuario_id INTEGER;"))
+                
+                # 2. Tabla Prestamos (Nuevas columnas y limpieza de antiguas)
+                conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto NUMERIC(12, 2);"))
+                conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS num_cuotas INTEGER;"))
+                conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';"))
+                
+                # 3. Tabla Cuotas
+                conn.execute(text("ALTER TABLE cuotas ADD COLUMN IF NOT EXISTS monto_esperado NUMERIC(12, 2);"))
+                
+                # 4. Tabla de Auditoría (HistoriaOperacion)
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS historial_operaciones (
+                        id SERIAL PRIMARY KEY,
+                        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+                        accion VARCHAR NOT NULL,
+                        monto NUMERIC(12, 2),
+                        entidad_id INTEGER,
+                        detalles VARCHAR,
+                        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                
+                conn.commit()
+                print("INFO:     Database schema COMPATIBILITY SYNC completed.")
+            except Exception as e:
+                print(f"INFO:     Schema sync notice: {e}")
+                conn.rollback()
+    except Exception as e:
+        print(f"ERROR FATAL DE BASE DE DATOS: {e}")
+        # No matamos la app para que Render pueda registrar el log y la ponga Live
 
 # Incluir routers
 app.include_router(clientes.router)
