@@ -9,7 +9,8 @@ class PagoBase(BaseModel):
     comentario: Optional[str] = None
 
 class PagoCreate(PagoBase):
-    pass
+    class Config:
+        extra = "ignore"
 
 class PagoResponse(PagoBase):
     id: int

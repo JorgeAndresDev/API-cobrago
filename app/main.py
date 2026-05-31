@@ -30,6 +30,12 @@ def startup_db_check():
             try:
                 # 1. Tabla Clientes
                 conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS usuario_id INTEGER;"))
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS latitud FLOAT;"))
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS longitud FLOAT;"))
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS observaciones TEXT;"))
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS nivel_riesgo VARCHAR DEFAULT 'Bajo';"))
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS foto_url VARCHAR;"))
+                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS foto_local_path VARCHAR;"))
                 
                 # 2. Tabla Prestamos (Nuevas columnas y limpieza de antiguas)
                 conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto NUMERIC(12, 2);"))

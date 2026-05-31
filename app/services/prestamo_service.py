@@ -71,11 +71,9 @@ def crear_prestamo(db: Session, data, usuario_id: int):
 
 def listar_prestamos(db: Session):
     prestamos = db.query(Prestamo).all()
-    # Mapeamos para incluir el nombre del cliente y el saldo
+    # Mapeamos para incluir el nombre del cliente. El saldo se calcula desde la propiedad del modelo.
     for p in prestamos:
         p.nombre_cliente = p.cliente.nombre if p.cliente else "Desconocido"
-        saldo_pendiente = sum((c.monto_esperado or Decimal('0.00')) - (c.monto_abonado or Decimal('0.00')) for c in p.cuotas)
-        p.saldo = saldo_pendiente
     return prestamos
 
 def eliminar_prestamo(db: Session, prestamo_id: int):

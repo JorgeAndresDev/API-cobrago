@@ -20,6 +20,9 @@ class PrestamoCreate(BaseModel):
     frecuencia_pago: str
     num_cuotas: int
 
+    class Config:
+        extra = "ignore"
+
 class PrestamoResponse(BaseModel):
     id: int
     cliente_id: int

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
+from decimal import Decimal
 
 # 🔹 Base
 class ClienteBase(BaseModel):
@@ -8,10 +9,17 @@ class ClienteBase(BaseModel):
     cedula: str
     telefono: Optional[str] = None
     direccion: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    observaciones: Optional[str] = None
+    nivel_riesgo: Optional[str] = "Bajo"
+    foto_url: Optional[str] = None
+    foto_local_path: Optional[str] = None
 
 # 🔹 Crear cliente
 class ClienteCreate(ClienteBase):
-    pass
+    class Config:
+        extra = "ignore"
 
 # 🔹 Respuesta simplificada para listados
 class ClienteResponse(ClienteBase):
@@ -26,6 +34,7 @@ class PrestamoBrief(BaseModel):
     id: int
     monto_prestado: float
     fecha_creacion: datetime
+    saldo: Optional[Decimal] = None
 
     class Config:
         from_attributes = True
