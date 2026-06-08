@@ -43,6 +43,28 @@ def crear_prestamo(db: Session, data, usuario_id: int):
     else:
         prestamo_data = data
 
+    # 🔹 RESOLUCIÓN DE CLIENTE CORE:
+    # El móvil envía la cédula como string en cliente_id. Debemos traducirlo al ID numérico si es necesario.
+    client_id_raw = prestamo_data.get("cliente_id")
+    if client_id_raw:
+        # Intentamos buscar por ID numérico primero
+        cliente = None
+        try:
+            client_id_int = int(client_id_raw)
+            cliente = db.query(Cliente).filter(Cliente.id == client_id_int).first()
+        except (ValueError, TypeError):
+            pass
+        
+        # Si no se encontró por ID, buscamos por cédula
+        if not cliente:
+            cliente = db.query(Cliente).filter(Cliente.cedula == str(client_id_raw)).first()
+        
+        if not cliente:
+            raise ValueError(f"Cliente con identificador {client_id_raw} no encontrado.")
+        
+        # Sobreescribimos con el ID numérico real para la DB
+        prestamo_data["cliente_id"] = cliente.id
+
     try:
         # 1. Crear el préstamo
         prestamo = Prestamo(**prestamo_data)

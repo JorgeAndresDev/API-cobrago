@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any, Union
 from decimal import Decimal
 
 class CuotaResponse(BaseModel):
@@ -16,7 +16,7 @@ class CuotaResponse(BaseModel):
 
 class PrestamoCreate(BaseModel):
     uuid: Optional[str] = None
-    cliente_id: Optional[int] = None
+    cliente_id: Optional[Union[int, str]] = None
     monto: Decimal
     tipo_interes: Optional[str] = "diaria"
     porcentaje_interes: Optional[float] = 0.0
