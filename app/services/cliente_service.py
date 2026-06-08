@@ -62,6 +62,21 @@ def listar_clientes(db: Session):
     repo = ClienteRepository(db)
     return repo.get_all()
 
-def eliminar_cliente(db: Session, cliente_id: int):
+def eliminar_cliente(db: Session, cliente_id: str):
     repo = ClienteRepository(db)
-    return repo.delete(cliente_id)
+    # Intentar buscar por ID interno
+    cliente = None
+    try:
+        # Si es un número, buscamos por ID primario
+        client_id_int = int(cliente_id)
+        cliente = repo.get_by_id(client_id_int)
+    except (ValueError, TypeError):
+        pass
+    
+    # Si no se encontró o no era un ID válido, buscamos por cédula
+    if not cliente:
+        cliente = db.query(Cliente).filter(Cliente.cedula == str(cliente_id)).first()
+    
+    if cliente:
+        return repo.delete(cliente.id)
+    return None

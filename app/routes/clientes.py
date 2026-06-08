@@ -52,7 +52,7 @@ def create_prestamo_cliente(cliente_id: int, prestamo: PrestamoCreate, db: Sessi
     return crear_prestamo(db, prestamo_dict, usuario_id=current_user.id)
 
 @router.delete("/{cliente_id}")
-def delete(cliente_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+def delete(cliente_id: str, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     cliente = eliminar_cliente(db, cliente_id)
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
