@@ -11,9 +11,7 @@ def generar_cuotas(prestamo: Prestamo):
     monto_por_cuota = (valor_total / prestamo.num_cuotas).quantize(Decimal('0.01'))
     fecha_base = date.today()
 
-    for i in range(1, prestamo.num_cuotas + i): # Note: fix loop range if needed, usually num_cuotas + 1
-        if i > prestamo.num_cuotas: break
-        
+    for i in range(1, prestamo.num_cuotas + 1):
         if prestamo.frecuencia_pago == "diaria":
             fecha = fecha_base + timedelta(days=i)
         elif prestamo.frecuencia_pago == "semanal":
