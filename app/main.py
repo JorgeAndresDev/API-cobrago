@@ -19,54 +19,37 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_db_check():
-    print("INFO:     Iniciando conexión a la base de datos...")
+    print("INFO:     Verificando BD...")
     try:
-        # Crear tablas en la DB
         Base.metadata.create_all(bind=engine)
-        print("INFO:     Conexión exitosa y tablas verificadas.")
-        
-        # Auto-parche para asegurar columnas y tablas nuevas sin migraciones manuales
+        # Parcheo manual silencioso
         with engine.connect() as conn:
-            try:
-                # 1. Tabla Clientes
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS usuario_id INTEGER;"))
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS latitud FLOAT;"))
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS longitud FLOAT;"))
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS observaciones TEXT;"))
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS nivel_riesgo VARCHAR DEFAULT 'Bajo';"))
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS foto_url VARCHAR;"))
-                conn.execute(text("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS foto_local_path VARCHAR;"))
-                
-                # 2. Tabla Prestamos (Nuevas columnas y limpieza de antiguas)
-                conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto NUMERIC(12, 2);"))
-                conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS num_cuotas INTEGER;"))
-                conn.execute(text("ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';"))
-                
-                # 3. Tabla Cuotas
-                conn.execute(text("ALTER TABLE cuotas ADD COLUMN IF NOT EXISTS monto_esperado NUMERIC(12, 2);"))
-                
-                # 4. Tabla de Auditoría (HistoriaOperacion)
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS historial_operaciones (
-                        id SERIAL PRIMARY KEY,
-                        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
-                        accion VARCHAR NOT NULL,
-                        monto NUMERIC(12, 2),
-                        entidad_id INTEGER,
-                        detalles VARCHAR,
-                        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-                
-                conn.commit()
-                print("INFO:     Database schema COMPATIBILITY SYNC completed.")
-            except Exception as e:
-                print(f"INFO:     Schema sync notice: {e}")
-                conn.rollback()
+            # Lista de comandos para ejecutar uno a uno de forma segura
+            commands = [
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS usuario_id INTEGER;",
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS latitud FLOAT;",
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS longitud FLOAT;",
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS observaciones TEXT;",
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS nivel_riesgo VARCHAR DEFAULT 'Bajo';",
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS foto_url VARCHAR;",
+                "ALTER TABLE clientes ADD COLUMN IF NOT EXISTS foto_local_path VARCHAR;",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS uuid VARCHAR;",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto_total NUMERIC(12, 2);",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS tipo_interes VARCHAR;",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS porcentaje_interes FLOAT;",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto NUMERIC(12, 2);",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS num_cuotas INTEGER;",
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';"
+            ]
+            for cmd in commands:
+                try:
+                    conn.execute(text(cmd))
+                    conn.commit()
+                except:
+                    conn.rollback() # Ignoramos si la columna ya existe o falla el comando individual
+        print("INFO:     BD lista.")
     except Exception as e:
-        print(f"ERROR FATAL DE BASE DE DATOS: {e}")
-        # No matamos la app para que Render pueda registrar el log y la ponga Live
-
+        print(f"ALERTA: Error en startup: {e}")
 # Incluir routers
 app.include_router(clientes.router)
 app.include_router(prestamo_router.router)

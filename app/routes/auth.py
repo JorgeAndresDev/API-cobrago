@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.usuario import Usuario
-from app.schemas.usuario import UsuarioCreate, UsuarioOut, Token, LoginRequest
+from app.schemas.usuario import UsuarioCreate, UsuarioOut, Token, LoginRequest, PasswordChangeRequest
 from app.auth import hash_password, verify_password, create_access_token, create_refresh_token, get_current_user, SECRET_KEY, ALGORITHM
 from jose import jwt, JWTError
 
@@ -75,9 +75,38 @@ def refresh(refresh_token: str, db: Session = Depends(get_db)):
 def get_me(current_user: Usuario = Depends(get_current_user)):
     return current_user
 
+@router.put("/change-password")
+def change_password(
+    data: PasswordChangeRequest, 
+    db: Session = Depends(get_db), 
+    current_user: Usuario = Depends(get_current_user)
+):
+    # Verificar contraseña actual
+    if not verify_password(data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual es incorrecta"
+        )
+    
+    # Actualizar a la nueva contraseña
+    current_user.hashed_password = hash_password(data.new_password)
+    db.commit()
+    
+    return {"message": "Contraseña actualizada exitosamente"}
+
 @router.post("/logout")
 def logout(current_user: Usuario = Depends(get_current_user)):
     return {"message": f"Sesión de {current_user.username} cerrada exitosamente"}
+
+@router.get("/users", response_model=list[UsuarioOut])
+def list_users(
+    db: Session = Depends(get_db), 
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Retorna la lista de todos los usuarios registrados.
+    """
+    return db.query(Usuario).all()
 
 @router.delete("/usuarios/{usuario_id}")
 def eliminar_usuario(

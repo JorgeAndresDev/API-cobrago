@@ -15,8 +15,12 @@ class CuotaResponse(BaseModel):
         from_attributes = True
 
 class PrestamoCreate(BaseModel):
+    uuid: Optional[str] = None
     cliente_id: Optional[int] = None
     monto: Decimal
+    tipo_interes: Optional[str] = "diaria"
+    porcentaje_interes: Optional[float] = 0.0
+    monto_total: Optional[Decimal] = None
     frecuencia_pago: str
     num_cuotas: int
 
@@ -25,9 +29,13 @@ class PrestamoCreate(BaseModel):
 
 class PrestamoResponse(BaseModel):
     id: int
+    uuid: Optional[str] = None
     cliente_id: int
     nombre_cliente: Optional[str] = None
     monto: Decimal
+    monto_total: Optional[Decimal] = None
+    tipo_interes: Optional[str] = None
+    porcentaje_interes: Optional[float] = None
     saldo: Optional[Decimal] = None
     frecuencia_pago: str
     num_cuotas: int

@@ -18,7 +18,11 @@ def crear_cliente(
 ):
     repo = ClienteRepository(db)
     
-    # Podríamos agregar validaciones de negocio aquí
+    # 🔹 Validación: Evitar duplicados por cédula
+    existente = db.query(Cliente).filter(Cliente.cedula == cedula).first()
+    if existente:
+        raise ValueError(f"La cédula {cedula} ya se encuentra registrada.")
+
     cliente = Cliente(
         nombre=nombre,
         cedula=cedula,
@@ -33,6 +37,26 @@ def crear_cliente(
         usuario_id=usuario_id
     )
     return repo.create(cliente)
+
+def actualizar_cliente(db: Session, cliente_id: int, datos: dict):
+    repo = ClienteRepository(db)
+    cliente = repo.get_by_id(cliente_id)
+    if not cliente:
+        return None
+    
+    # Si se intenta cambiar la cédula, validar que no choque con otra
+    if "cedula" in datos and datos["cedula"] != cliente.cedula:
+        existente = db.query(Cliente).filter(Cliente.cedula == datos["cedula"]).first()
+        if existente:
+            raise ValueError(f"La nueva cédula {datos['cedula']} ya pertenece a otro cliente.")
+
+    for key, value in datos.items():
+        if value is not None:
+            setattr(cliente, key, value)
+    
+    db.commit()
+    db.refresh(cliente)
+    return cliente
 
 def listar_clientes(db: Session):
     repo = ClienteRepository(db)

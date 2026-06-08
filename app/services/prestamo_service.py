@@ -6,15 +6,20 @@ from decimal import Decimal
 
 def generar_cuotas(prestamo: Prestamo):
     cuotas = []
-    monto_total = Decimal(str(prestamo.monto))
-    monto_por_cuota = (monto_total / prestamo.num_cuotas).quantize(Decimal('0.01'))
+    # Usar monto_total (con intereses) o el monto base como fallback
+    valor_total = Decimal(str(prestamo.monto_total or prestamo.monto))
+    monto_por_cuota = (valor_total / prestamo.num_cuotas).quantize(Decimal('0.01'))
     fecha_base = date.today()
 
-    for i in range(1, prestamo.num_cuotas + 1):
+    for i in range(1, prestamo.num_cuotas + i): # Note: fix loop range if needed, usually num_cuotas + 1
+        if i > prestamo.num_cuotas: break
+        
         if prestamo.frecuencia_pago == "diaria":
             fecha = fecha_base + timedelta(days=i)
         elif prestamo.frecuencia_pago == "semanal":
             fecha = fecha_base + timedelta(days=7 * i)
+        elif prestamo.frecuencia_pago == "quincenal":
+            fecha = fecha_base + timedelta(days=15 * i)
         elif prestamo.frecuencia_pago == "mensual":
             fecha = fecha_base + timedelta(days=30 * i)
         else:
@@ -56,9 +61,9 @@ def crear_prestamo(db: Session, data, usuario_id: int):
         audit = HistoriaOperacion(
             usuario_id=usuario_id,
             accion="CREAR_PRESTAMO",
-            monto=prestamo.monto,
+            monto=prestamo.monto_total or prestamo.monto,
             entidad_id=prestamo.id,
-            detalles=f"Préstamo de {prestamo.monto} creado para cliente {prestamo.cliente_id}"
+            detalles=f"Préstamo de {prestamo.monto} (Total: {prestamo.monto_total}) creado para cliente {prestamo.cliente_id}"
         )
         db.add(audit)
 

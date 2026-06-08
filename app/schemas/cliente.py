@@ -21,6 +21,22 @@ class ClienteCreate(ClienteBase):
     class Config:
         extra = "ignore"
 
+# 🔹 Actualizar cliente
+class ClienteUpdate(BaseModel):
+    nombre: Optional[str] = None
+    cedula: Optional[str] = None
+    telefono: Optional[str] = None
+    direccion: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    observaciones: Optional[str] = None
+    nivel_riesgo: Optional[str] = None
+    foto_url: Optional[str] = None
+    foto_local_path: Optional[str] = None
+
+    class Config:
+        extra = "ignore"
+
 # 🔹 Respuesta simplificada para listados
 class ClienteResponse(ClienteBase):
     id: int

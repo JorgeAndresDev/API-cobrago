@@ -25,3 +25,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
