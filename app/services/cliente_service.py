@@ -38,9 +38,20 @@ def crear_cliente(
     )
     return repo.create(cliente)
 
-def actualizar_cliente(db: Session, cliente_id: int, datos: dict):
+def actualizar_cliente(db: Session, cliente_id: str, datos: dict):
     repo = ClienteRepository(db)
-    cliente = repo.get_by_id(cliente_id)
+    # Intentar buscar por ID interno
+    cliente = None
+    try:
+        client_id_int = int(cliente_id)
+        cliente = repo.get_by_id(client_id_int)
+    except (ValueError, TypeError):
+        pass
+    
+    # Si no se encontró por ID, buscamos por cédula
+    if not cliente:
+        cliente = db.query(Cliente).filter(Cliente.cedula == str(cliente_id)).first()
+        
     if not cliente:
         return None
     

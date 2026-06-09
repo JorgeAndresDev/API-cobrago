@@ -20,7 +20,7 @@ def create(cliente: ClienteCreate, db: Session = Depends(get_db), current_user: 
 
 @router.put("/{cliente_id}", response_model=ClienteResponse)
 def update_cliente(
-    cliente_id: int, 
+    cliente_id: str, 
     cliente_data: ClienteUpdate, 
     db: Session = Depends(get_db), 
     current_user: Usuario = Depends(get_current_user)
@@ -38,8 +38,18 @@ def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_c
     return listar_clientes(db)
 
 @router.get("/{cliente_id}", response_model=ClienteDetail)
-def get_one(cliente_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
+def get_one(cliente_id: str, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+    # Intentar por ID
+    cliente = None
+    try:
+        cid_int = int(cliente_id)
+        cliente = db.query(Cliente).filter(Cliente.id == cid_int).first()
+    except:
+        pass
+    
+    if not cliente:
+        cliente = db.query(Cliente).filter(Cliente.cedula == str(cliente_id)).first()
+        
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return cliente
