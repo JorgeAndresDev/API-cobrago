@@ -10,13 +10,17 @@ router = APIRouter(prefix="/pagos", tags=["Pagos"])
 
 @router.post("/", response_model=PagoResponse)
 def create_pago(pago: PagoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    return registrar_pago(
-        db, 
-        prestamo_id=pago.prestamo_id, 
-        monto=pago.monto, 
-        usuario_id=current_user.id,
-        comentario=pago.comentario
-    )
+    from fastapi import HTTPException
+    try:
+        return registrar_pago(
+            db, 
+            prestamo_id=pago.prestamo_id, 
+            monto=pago.monto, 
+            user=current_user,
+            comentario=pago.comentario
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/", response_model=list[PagoResponse])

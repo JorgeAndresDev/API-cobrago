@@ -34,7 +34,14 @@ def generar_cuotas(prestamo: Prestamo):
 
     return cuotas
 
-def crear_prestamo(db: Session, data, usuario_id: int):
+from datetime import datetime, timezone
+from app.models.usuario import Usuario
+
+def crear_prestamo(db: Session, data, user: Usuario):
+    # 1️⃣ VALIDACIÓN DE VENCIMIENTO
+    if user.fecha_vencimiento and user.fecha_vencimiento.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise ValueError("Su suscripción ha vencido. Por favor, renueve su plan para continuar.")
+
     # Usamos transacciones atómicas para asegurar consistencia
     if hasattr(data, "model_dump"): # Compatibilidad Pydantic V2
         prestamo_data = data.model_dump()
@@ -44,7 +51,6 @@ def crear_prestamo(db: Session, data, usuario_id: int):
         prestamo_data = data
 
     # 🔹 RESOLUCIÓN DE CLIENTE CORE:
-    # El móvil envía la cédula como string en cliente_id. Debemos traducirlo al ID numérico si es necesario.
     client_id_raw = prestamo_data.get("cliente_id")
     if client_id_raw:
         # Intentamos buscar por ID numérico primero
@@ -61,6 +67,10 @@ def crear_prestamo(db: Session, data, usuario_id: int):
         
         if not cliente:
             raise ValueError(f"Cliente con identificador {client_id_raw} no encontrado.")
+
+        # 2️⃣ VALIDACIÓN DE PROPIEDAD
+        if user.rol != "admin" and cliente.usuario_id != user.id:
+            raise ValueError("No tiene permisos para crear un préstamo a un cliente ajeno.")
         
         # Sobreescribimos con el ID numérico real para la DB
         prestamo_data["cliente_id"] = cliente.id
@@ -79,7 +89,7 @@ def crear_prestamo(db: Session, data, usuario_id: int):
 
         # 3. Registrar en auditoría
         audit = HistoriaOperacion(
-            usuario_id=usuario_id,
+            usuario_id=user.id,
             accion="CREAR_PRESTAMO",
             monto=prestamo.monto_total or prestamo.monto,
             entidad_id=prestamo.id,
@@ -94,13 +104,28 @@ def crear_prestamo(db: Session, data, usuario_id: int):
         db.rollback()
         raise e
 
-def listar_prestamos(db: Session):
-    prestamos = db.query(Prestamo).all()
-    # Mapeamos para incluir el nombre del cliente. El saldo se calcula desde la propiedad del modelo.
+def listar_prestamos(db: Session, user: Usuario):
+    query = db.query(Prestamo)
+    
+    # FILTRADO DE PRIVACIDAD
+    if user.rol != "admin":
+        # Unimos con Cliente para filtrar por el dueño del cliente
+        query = query.join(Cliente).filter(Cliente.usuario_id == user.id)
+    
+    prestamos = query.all()
+    # Mapeamos para incluir el nombre del cliente
     for p in prestamos:
         p.nombre_cliente = p.cliente.nombre if p.cliente else "Desconocido"
     return prestamos
 
-def eliminar_prestamo(db: Session, prestamo_id: int):
+def eliminar_prestamo(db: Session, prestamo_id: int, user: Usuario):
+    prestamo = db.query(Prestamo).filter(Prestamo.id == prestamo_id).first()
+    if not prestamo:
+        return None
+        
+    # VALIDACIÓN DE PROPIEDAD
+    if user.rol != "admin" and prestamo.cliente.usuario_id != user.id:
+        raise ValueError("No tiene permisos para eliminar este préstamo.")
+
     repo = PrestamoRepository(db)
-    return repo.delete(prestamo_id)
+    return repo.delete(prestamo_id)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -14,7 +14,8 @@ class Usuario(Base):
     # Nuevos campos administrativos
     rol = Column(String(20), default="cobrador") # admin, cobrador
     estado_cuenta = Column(String(20), default="activo") # activo, suspendido, inactivo
-    plan_suscripcion = Column(String(20), default="basico") # basico, premium, profesional
+    plan_suscripcion = Column(String(20), default="basico") # demo, basico, profesional, empresa
+    fecha_vencimiento = Column(DateTime, nullable=True) # Control de suscripción
 
     # Relación: Si se elimina el usuario, se eliminan todos sus clientes asociados
     clientes = relationship("Cliente", back_populates="usuario", cascade="all, delete-orphan")

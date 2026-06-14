@@ -42,7 +42,8 @@ def startup_db_check():
                 "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';",
                 "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR DEFAULT 'cobrador';",
                 "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS estado_cuenta VARCHAR DEFAULT 'activo';",
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plan_suscripcion VARCHAR DEFAULT 'basico';"
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plan_suscripcion VARCHAR DEFAULT 'basico';",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS fecha_vencimiento TIMESTAMP;"
             ]
             for cmd in commands:
                 try:

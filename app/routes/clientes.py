@@ -14,7 +14,7 @@ router = APIRouter(prefix="/clientes", tags=["Clientes"])
 @router.post("/", response_model=ClienteResponse)
 def create(cliente: ClienteCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     try:
-        return crear_cliente(db, **cliente.dict(), usuario_id=current_user.id)
+        return crear_cliente(db, **cliente.dict(), user=current_user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -26,16 +26,16 @@ def update_cliente(
     current_user: Usuario = Depends(get_current_user)
 ):
     try:
-        cliente = actualizar_cliente(db, cliente_id, cliente_data.dict(exclude_none=True))
+        cliente = actualizar_cliente(db, cliente_id, cliente_data.dict(exclude_none=True), current_user)
         if not cliente:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
         return cliente
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e))
 
 @router.get("/", response_model=list[ClienteResponse])
 def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    return listar_clientes(db)
+    return listar_clientes(db, current_user)
 
 @router.get("/{cliente_id}", response_model=ClienteDetail)
 def get_one(cliente_id: str, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
@@ -63,7 +63,10 @@ def create_prestamo_cliente(cliente_id: int, prestamo: PrestamoCreate, db: Sessi
 
 @router.delete("/{cliente_id}")
 def delete(cliente_id: str, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    cliente = eliminar_cliente(db, cliente_id)
-    if not cliente:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    return {"message": f"Cliente {cliente_id} eliminado exitosamente"}
+    try:
+        cliente = eliminar_cliente(db, cliente_id, current_user)
+        if not cliente:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        return {"message": f"Cliente {cliente_id} eliminado exitosamente"}
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))

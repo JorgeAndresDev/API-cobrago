@@ -3,16 +3,25 @@ from app.models import Prestamo, Cuota, Pago, HistoriaOperacion
 from fastapi import HTTPException
 from decimal import Decimal
 
-def registrar_pago(db: Session, prestamo_id: int, monto: Decimal, usuario_id: int, comentario: str = None):
+from datetime import datetime, timezone
+from app.models.usuario import Usuario
+
+def registrar_pago(db: Session, prestamo_id: int, monto: Decimal, user: Usuario, comentario: str = None):
+    # 1️⃣ VALIDACIÓN DE VENCIMIENTO
+    if user.fecha_vencimiento and user.fecha_vencimiento.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise ValueError("Su suscripción ha vencido. Por favor, renueve su plan para continuar.")
     # Usamos try/except con rollback para asegurar atomicidad
     try:
         # 1. Buscar el préstamo
         prestamo = db.query(Prestamo).filter(Prestamo.id == prestamo_id).first()
         if not prestamo:
-            raise HTTPException(status_code=404, detail="Préstamo no encontrado")
+            raise ValueError("Préstamo no encontrado")
+        # 2️⃣ VALIDACIÓN DE PROPIEDAD
+        if user.rol != "admin" and prestamo.cliente.usuario_id != user.id:
+            raise ValueError("No tiene permisos para registrar pagos en este préstamo.")
 
         if monto <= 0:
-            raise HTTPException(status_code=400, detail="El monto debe ser mayor a cero")
+            raise ValueError("El monto debe ser mayor a cero")
 
         # 2. Obtener cuotas pendientes o parciales ordenadas por fecha
         cuotas_pendientes = db.query(Cuota).filter(
@@ -67,7 +76,7 @@ def registrar_pago(db: Session, prestamo_id: int, monto: Decimal, usuario_id: in
 
         # 6. Registrar en auditoría
         audit = HistoriaOperacion(
-            usuario_id=usuario_id,
+            usuario_id=user.id,
             accion="PAGO",
             monto=monto,
             entidad_id=nuevo_pago.id,

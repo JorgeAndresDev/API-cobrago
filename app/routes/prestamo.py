@@ -12,27 +12,23 @@ router = APIRouter(prefix="/prestamos", tags=["Prestamos"])
 
 @router.post("/", response_model=PrestamoResponse)
 def create(data: PrestamoCreate, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    # Si no se envía cliente_id, intentamos obtenerlo del usuario autenticado
-    if data.cliente_id is None:
-        cliente = db.query(Cliente).filter(Cliente.usuario_id == current_user.id).first()
-        if not cliente:
-            raise HTTPException(
-                status_code=400, 
-                detail="No tienes un perfil de cliente asociado. Por favor, crea uno primero."
-            )
-        data.cliente_id = cliente.id
-    
-    return crear_prestamo(db, data, usuario_id=current_user.id)
+    try:
+        return crear_prestamo(db, data, user=current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/", response_model=list[PrestamoResponse])
 def get_all(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    return listar_prestamos(db)
+    return listar_prestamos(db, current_user)
 
 
 @router.delete("/{prestamo_id}")
 def delete(prestamo_id: int, db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    prestamo = eliminar_prestamo(db, prestamo_id)
-    if not prestamo:
-        raise HTTPException(status_code=404, detail="Préstamo no encontrado")
-    return {"message": f"Préstamo {prestamo_id} eliminado exitosamente"}
+    try:
+        prestamo = eliminar_prestamo(db, prestamo_id, current_user)
+        if not prestamo:
+            raise HTTPException(status_code=404, detail="Préstamo no encontrado")
+        return {"message": f"Préstamo {prestamo_id} eliminado exitosamente"}
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
