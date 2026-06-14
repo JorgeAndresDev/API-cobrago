@@ -74,3 +74,12 @@ def get_current_user(
         raise credentials_exception
     
     return user
+
+# ── Dependencia: administrador ─────────────────────────────
+def get_admin_user(current_user: Usuario = Depends(get_current_user)):
+    if current_user.rol != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tiene permisos de administrador para realizar esta acción"
+        )
+    return current_user

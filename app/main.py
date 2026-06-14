@@ -4,7 +4,7 @@ from sqlalchemy import text
 from app.database import engine, Base
 from app.models import * # Carga centralizada de todos los modelos
 from app.routes import clientes, prestamo as prestamo_router, pagos
-from app.routes import auth
+from app.routes import auth, admin
 
 app = FastAPI(title="CobraGo API", version="1.0.0")
 
@@ -39,7 +39,10 @@ def startup_db_check():
                 "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS porcentaje_interes FLOAT;",
                 "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS monto NUMERIC(12, 2);",
                 "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS num_cuotas INTEGER;",
-                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';"
+                "ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS estado VARCHAR DEFAULT 'pendiente';",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR DEFAULT 'cobrador';",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS estado_cuenta VARCHAR DEFAULT 'activo';",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plan_suscripcion VARCHAR DEFAULT 'basico';"
             ]
             for cmd in commands:
                 try:
@@ -57,6 +60,7 @@ app.include_router(pagos.router)
 
 # Auth
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 # Stats
 from app.routes import stats

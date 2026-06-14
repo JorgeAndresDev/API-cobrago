@@ -10,9 +10,18 @@ class UsuarioOut(BaseModel):
     username: str
     email: str
     activo: bool
+    rol: str
+    estado_cuenta: str
+    plan_suscripcion: str
 
     class Config:
         from_attributes = True
+
+class UsuarioAdminUpdate(BaseModel):
+    activo: bool | None = None
+    rol: str | None = None
+    estado_cuenta: str | None = None
+    plan_suscripcion: str | None = None
 
 class LoginRequest(BaseModel):
     correo: EmailStr

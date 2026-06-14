@@ -10,6 +10,11 @@ class Usuario(Base):
     email = Column(String(100), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     activo = Column(Boolean, default=True)
+    
+    # Nuevos campos administrativos
+    rol = Column(String(20), default="cobrador") # admin, cobrador
+    estado_cuenta = Column(String(20), default="activo") # activo, suspendido, inactivo
+    plan_suscripcion = Column(String(20), default="basico") # basico, premium, profesional
 
     # Relación: Si se elimina el usuario, se eliminan todos sus clientes asociados
-    clientes = relationship("Cliente", back_populates="usuario", cascade="all, delete")
+    clientes = relationship("Cliente", back_populates="usuario", cascade="all, delete-orphan")
