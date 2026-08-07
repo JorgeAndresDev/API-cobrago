@@ -66,3 +66,7 @@ app.include_router(admin.router)
 # Stats
 from app.routes import stats
 app.include_router(stats.router)
+
+# Locations (Geolocalización)
+from app.locations import router as locations_router
+app.include_router(locations_router)

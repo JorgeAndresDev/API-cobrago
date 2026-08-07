@@ -1,4 +1,6 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from typing import Optional
 
 class UsuarioCreate(BaseModel):
     username: str
@@ -13,6 +15,7 @@ class UsuarioOut(BaseModel):
     rol: str
     estado_cuenta: str
     plan_suscripcion: str
+    fecha_vencimiento: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -22,6 +25,7 @@ class UsuarioAdminUpdate(BaseModel):
     rol: str | None = None
     estado_cuenta: str | None = None
     plan_suscripcion: str | None = None
+    fecha_vencimiento: Optional[datetime] = None
 
 class LoginRequest(BaseModel):
     correo: EmailStr

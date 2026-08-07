@@ -48,7 +48,7 @@ class ClienteResponse(ClienteBase):
 # 🔹 Detalle del cliente con sus préstamos
 class PrestamoBrief(BaseModel):
     id: int
-    monto_prestado: float
+    monto: float
     fecha_creacion: datetime
     saldo: Optional[Decimal] = None
 
