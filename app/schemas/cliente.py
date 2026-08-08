@@ -40,6 +40,7 @@ class ClienteUpdate(BaseModel):
 # 🔹 Respuesta simplificada para listados
 class ClienteResponse(ClienteBase):
     id: int
+    usuario_id: Optional[int] = None
     fecha_creacion: datetime
 
     class Config:
